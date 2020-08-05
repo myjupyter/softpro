@@ -60,7 +60,7 @@ func (w *Worker) Run() {
         value, err := strconv.ParseFloat(sport[SPORT].(string), 64)
 
         // DataBase Insertion
-        info, err := w.Conn.Insert(w.Subs.Sport, []interface{}{nil, value})
+        info, err := w.Conn.Insert(w.Subs.Sport, []interface{}{nil, value, uint64(time.Now().Unix())})
         if err != nil {
             log.WithFields(log.Fields{
                 "worker" : w.ID,

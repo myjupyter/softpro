@@ -56,7 +56,7 @@ func main() {
     
     log.Debug("GRPC server listens")
     s := grpc.NewServer()
-    srv := &grpcserv.GRPCServer{}
+    srv := &grpcserv.GRPCServer{Conn: conn}
 
     subs.RegisterSubscribtionServer(s, srv)
     l, err := net.Listen("tcp", ":8080")

@@ -1,5 +1,8 @@
 run:
 	sudo docker container start test happy_darwin
+	
+	
+build:
 	go build ./src/main.go 
 	./main
 
