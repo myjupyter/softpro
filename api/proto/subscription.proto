@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package subscription;
+
+service Subscribtion {
+    rpc SubscribeOnSportsLines(SubsRequest) returns (SubsResponse) {}
+}
+
+message SubsRequest {
+    int64 sec = 1;
+    repeated string sports = 2; 
+}
+
+message SubsResponse {
+    map<string, float> sports = 1;
+}
