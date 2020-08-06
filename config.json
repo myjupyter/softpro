@@ -1,0 +1,25 @@
+{
+    "http" : {
+        "address" : "localhost",
+        "port" : "8001"
+    },
+    "grpc" : {
+        "address" : "localhost",
+        "port" : "8002"
+    },
+    "datastorage" : {
+        "address" : "localhost",
+        "port" : "3301",
+        "login" : "user",
+        "password" : "secret"
+    },
+    "lineprovider" : {
+        "url" : "http://localhost:8000/api/v1/",
+        "sports" : {
+            "soccer"   : 1,
+            "football" : 4,
+            "baseball" : 2
+        }
+    },
+    "loglevel" : "debug"
+}
