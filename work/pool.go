@@ -3,11 +3,14 @@ package work
 import (
     "fmt"
     "net/http"
+    "time"
+    "encoding/json"
     "github.com/tarantool/go-tarantool"
 )
 
 type WorkerPool struct {
-    Workers []Worker
+    Workers       []Worker
+    WorkersStates []*WorkerState
 }
 
 func (wp *WorkerPool) Start(conn *tarantool.Connection, url string, sports ...SportSubs) {
@@ -17,33 +20,55 @@ func (wp *WorkerPool) Start(conn *tarantool.Connection, url string, sports ...Sp
             URL: url,
             Subs: sport,
             Conn: conn,
-            Status: make(chan interface{}),
-            CheckStat: make(chan bool),
         })
-        wp.Workers[i].Start()
+        wp.WorkersStates = append(wp.WorkersStates, new(WorkerState))
+        wp.Workers[i].Start(wp.WorkersStates[i])
     }
 }
 
-// TODO: собирать информацию о воркерах
-func (wp *WorkerPool) CheckWorkersStatus() bool {
-    for _, worker := range wp.Workers {
-        worker.CheckStat <- true
-        if err := <-worker.Status; err != nil {
+func (wp *WorkerPool) CheckWorkersSync() bool {
+    
+    for i := 0; i < len(wp.WorkersStates); i++ {
+        for true {
+            if wp.WorkersStates[i].GetError() != nil {
+                return false
+            }
+            if wp.WorkersStates[i].IsSync() {
+                break
+            }
+            time.Sleep(1 * time.Second)
+        }
+    }
+    return true
+}
+
+func (wp *WorkerPool) CheckWorkerStatus() bool {
+    for _, worker_state := range wp.WorkersStates {
+        if worker_state.GetError() != nil {
             return false
-        } 
+        }
     }
     return true
 }
 
 func (wp *WorkerPool) ReadyHandler(w http.ResponseWriter, req *http.Request) {
-    if wp.CheckWorkersStatus() {
+    if wp.CheckWorkerStatus() {
         w.WriteHeader(http.StatusOK)
-        //TODO: Более детальная информация
-        fmt.Fprintf(w, "OK")
-        return
+    } else {
+        w.WriteHeader(http.StatusInternalServerError)
     }
-    w.WriteHeader(http.StatusInternalServerError)
-    fmt.Fprintf(w, "Not OK")
+   
+    var states []string
+    for _, state := range wp.WorkersStates {
+        states = append(states, state.GetJSONInfo())
+    }
+    info := map[string][]string{
+        "server": states,
+    }
+
+    status_json, _ := json.Marshal(info)
+
+    fmt.Fprintf(w, string(status_json))
 }
 
 

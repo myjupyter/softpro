@@ -7,9 +7,47 @@ import (
     "encoding/json"
     "strings"
     "strconv"
+//    "sync"
     "github.com/tarantool/go-tarantool"
     log "github.com/sirupsen/logrus"
+    //"fmt"
 )
+
+type WorkerState struct {
+    latest_sync string  
+    status bool        
+    worker_id uint         
+
+    err error
+//    mutex sync.Mutex
+}
+
+func (ws *WorkerState) GetError() error {
+    return ws.err
+}
+
+func (ws *WorkerState) IsSync() bool {
+    return ws.status
+}
+
+func (ws *WorkerState) WriteWorkerState(err error, latest_sync string, status bool, id uint) {
+   // ws.mutex.Lock()1
+    *ws = WorkerState{err: err, latest_sync: latest_sync, status: status, worker_id: id}
+    //  ws.mutex.Unlock()
+}
+
+func (ws *WorkerState) GetJSONInfo() string {
+   // ws.mutex.Lock()
+   info := map[string]interface{}{
+        "latest_sync" : ws.latest_sync,
+        "status"      : ws.status,
+        "worker_id"   : ws.worker_id,
+    }
+
+    ws_json, _ := json.Marshal(info)
+    // ws.mutex.Unlock()
+    return string(ws_json)
+}
 
 type SportSubs struct {
     Sport string
@@ -21,22 +59,20 @@ type Worker struct {
     URL string
     Subs SportSubs
     Conn *tarantool.Connection
-
-    Status chan interface{} 
-    CheckStat chan bool
 }
 
-func (w *Worker) Run() {
+func (w *Worker) Run(worker_state *WorkerState) {
     worker_log := log.WithFields(log.Fields{"worker" : w.ID})
     URL := w.URL + w.Subs.Sport
     SPORT := strings.ToUpper(w.Subs.Sport)
     worker_log.Info("Started working")
+    
     for {
         // Makes request
         resp, err := http.Get(URL)
         if err != nil {
             worker_log.Error(err)
-            w.Status <- err
+            worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
             return
         }
         defer resp.Body.Close()
@@ -45,7 +81,7 @@ func (w *Worker) Run() {
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil {
             worker_log.Error(err)
-            w.Status <- err
+            worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
             return
         }
         
@@ -53,7 +89,7 @@ func (w *Worker) Run() {
         var dat map[string]interface{}
         if err := json.Unmarshal(body, &dat); err != nil {
             worker_log.Error(err)
-            w.Status <- err
+            worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
             return
         }
         sport := dat["lines"].(map[string]interface{})
@@ -67,25 +103,17 @@ func (w *Worker) Run() {
                 "code" : info.Code,
                 "data" : info.Data,
             }).Error(err)
-            w.Status <- err
+            worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
             return
         }
-
-        //TODO: храить информацию в некотором информаторе, чтобы не ожидать
-        //синхронизации линий, а давать предпоследнюю информацию
-        select {
-            case <- w.CheckStat:
-                log.Info("Stat")
-                w.Status <- nil
-            default: 
-        }
-
+        worker_state.WriteWorkerState(nil, time.Now().String(), true, w.ID)
+        
         time.Sleep(time.Duration(w.Subs.Seconds) * time.Second)
     }
 }
 
-func (w *Worker) Start() {
-    go w.Run()
+func (w *Worker) Start(worker_state *WorkerState) {
+    go w.Run(worker_state)
 }
 
 

@@ -53,18 +53,19 @@ func main() {
     http.HandleFunc("/ready", pool.ReadyHandler)
     go http.ListenAndServe(Address, nil) 
 
-    
-    log.Debug("GRPC server listens")
-    s := grpc.NewServer()
-    srv := &grpcserv.GRPCServer{Conn: conn}
+    if pool.CheckWorkersSync() {
+        log.Debug("GRPC server listens")
+        s := grpc.NewServer()
+        srv := &grpcserv.GRPCServer{Conn: conn}
 
-    subs.RegisterSubscribtionServer(s, srv)
-    l, err := net.Listen("tcp", ":8080")
-    if err != nil {
-        log.Fatal(err)
-    }
+        subs.RegisterSubscribtionServer(s, srv)
+        l, err := net.Listen("tcp", ":8080")
+        if err != nil {
+            log.Fatal(err)
+        }
 
-    if err := s.Serve(l); err != nil {
-        log.Fatal(err)
+        if err := s.Serve(l); err != nil {
+            log.Fatal(err)
+        }
     }
 }

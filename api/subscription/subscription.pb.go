@@ -89,7 +89,7 @@ type SubsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Sports map[string]float32 `protobuf:"bytes,1,rep,name=sports,proto3" json:"sports,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed32,2,opt,name=value,proto3"`
+	Sports map[string]float64 `protobuf:"bytes,1,rep,name=sports,proto3" json:"sports,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
 }
 
 func (x *SubsResponse) Reset() {
@@ -124,7 +124,7 @@ func (*SubsResponse) Descriptor() ([]byte, []int) {
 	return file_subscription_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SubsResponse) GetSports() map[string]float32 {
+func (x *SubsResponse) GetSports() map[string]float64 {
 	if x != nil {
 		return x.Sports
 	}
@@ -147,15 +147,15 @@ var file_subscription_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x72, 0x79, 0x52, 0x06, 0x73, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x1a, 0x39, 0x0a, 0x0b,
 	0x53, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b,
 	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x02, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x32, 0x61, 0x0a, 0x0c, 0x53, 0x75, 0x62, 0x73, 0x63,
-	0x72, 0x69, 0x62, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x51, 0x0a, 0x16, 0x53, 0x75, 0x62, 0x73, 0x63,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x32, 0x65, 0x0a, 0x0c, 0x53, 0x75, 0x62, 0x73, 0x63,
+	0x72, 0x69, 0x62, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x55, 0x0a, 0x16, 0x53, 0x75, 0x62, 0x73, 0x63,
 	0x72, 0x69, 0x62, 0x65, 0x4f, 0x6e, 0x53, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x4c, 0x69, 0x6e, 0x65,
 	0x73, 0x12, 0x19, 0x2e, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
 	0x2e, 0x53, 0x75, 0x62, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x73,
 	0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x53, 0x75, 0x62, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x28, 0x01, 0x30, 0x01, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -250,7 +250,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SubscribtionClient interface {
-	SubscribeOnSportsLines(ctx context.Context, in *SubsRequest, opts ...grpc.CallOption) (*SubsResponse, error)
+	SubscribeOnSportsLines(ctx context.Context, opts ...grpc.CallOption) (Subscribtion_SubscribeOnSportsLinesClient, error)
 }
 
 type subscribtionClient struct {
@@ -261,59 +261,91 @@ func NewSubscribtionClient(cc grpc.ClientConnInterface) SubscribtionClient {
 	return &subscribtionClient{cc}
 }
 
-func (c *subscribtionClient) SubscribeOnSportsLines(ctx context.Context, in *SubsRequest, opts ...grpc.CallOption) (*SubsResponse, error) {
-	out := new(SubsResponse)
-	err := c.cc.Invoke(ctx, "/subscription.Subscribtion/SubscribeOnSportsLines", in, out, opts...)
+func (c *subscribtionClient) SubscribeOnSportsLines(ctx context.Context, opts ...grpc.CallOption) (Subscribtion_SubscribeOnSportsLinesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Subscribtion_serviceDesc.Streams[0], "/subscription.Subscribtion/SubscribeOnSportsLines", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &subscribtionSubscribeOnSportsLinesClient{stream}
+	return x, nil
+}
+
+type Subscribtion_SubscribeOnSportsLinesClient interface {
+	Send(*SubsRequest) error
+	Recv() (*SubsResponse, error)
+	grpc.ClientStream
+}
+
+type subscribtionSubscribeOnSportsLinesClient struct {
+	grpc.ClientStream
+}
+
+func (x *subscribtionSubscribeOnSportsLinesClient) Send(m *SubsRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *subscribtionSubscribeOnSportsLinesClient) Recv() (*SubsResponse, error) {
+	m := new(SubsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // SubscribtionServer is the server API for Subscribtion service.
 type SubscribtionServer interface {
-	SubscribeOnSportsLines(context.Context, *SubsRequest) (*SubsResponse, error)
+	SubscribeOnSportsLines(Subscribtion_SubscribeOnSportsLinesServer) error
 }
 
 // UnimplementedSubscribtionServer can be embedded to have forward compatible implementations.
 type UnimplementedSubscribtionServer struct {
 }
 
-func (*UnimplementedSubscribtionServer) SubscribeOnSportsLines(context.Context, *SubsRequest) (*SubsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubscribeOnSportsLines not implemented")
+func (*UnimplementedSubscribtionServer) SubscribeOnSportsLines(Subscribtion_SubscribeOnSportsLinesServer) error {
+	return status.Errorf(codes.Unimplemented, "method SubscribeOnSportsLines not implemented")
 }
 
 func RegisterSubscribtionServer(s *grpc.Server, srv SubscribtionServer) {
 	s.RegisterService(&_Subscribtion_serviceDesc, srv)
 }
 
-func _Subscribtion_SubscribeOnSportsLines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SubsRequest)
-	if err := dec(in); err != nil {
+func _Subscribtion_SubscribeOnSportsLines_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SubscribtionServer).SubscribeOnSportsLines(&subscribtionSubscribeOnSportsLinesServer{stream})
+}
+
+type Subscribtion_SubscribeOnSportsLinesServer interface {
+	Send(*SubsResponse) error
+	Recv() (*SubsRequest, error)
+	grpc.ServerStream
+}
+
+type subscribtionSubscribeOnSportsLinesServer struct {
+	grpc.ServerStream
+}
+
+func (x *subscribtionSubscribeOnSportsLinesServer) Send(m *SubsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *subscribtionSubscribeOnSportsLinesServer) Recv() (*SubsRequest, error) {
+	m := new(SubsRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(SubscribtionServer).SubscribeOnSportsLines(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/subscription.Subscribtion/SubscribeOnSportsLines",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscribtionServer).SubscribeOnSportsLines(ctx, req.(*SubsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 var _Subscribtion_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "subscription.Subscribtion",
 	HandlerType: (*SubscribtionServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "SubscribeOnSportsLines",
-			Handler:    _Subscribtion_SubscribeOnSportsLines_Handler,
+			StreamName:    "SubscribeOnSportsLines",
+			Handler:       _Subscribtion_SubscribeOnSportsLines_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "subscription.proto",
 }
