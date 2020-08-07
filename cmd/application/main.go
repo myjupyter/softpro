@@ -31,7 +31,7 @@ var (
 func main() {
     // Reads flags 
     name := flag.String("name", "config", "Configuration file name without extension")
-    dir := flag.String("dir", ".", "Configuration file directory")
+    dir := flag.String("dir", "configs", "Configuration file directory")
     
     flag.Parse()
 
