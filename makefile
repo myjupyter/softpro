@@ -2,7 +2,7 @@ APP_NAME=application
 TARGET=$(APP_NAME).out
 
 lint:
-	golangci-lint
+	golangci-lint run
 
 build: proto
 	go build -o $(TARGET) cmd/$(APP_NAME)/main.go 
@@ -12,3 +12,6 @@ proto:
 
 format:
 	go fmt ./...
+	
+tests:
+	$(MAKE) -C test
