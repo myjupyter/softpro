@@ -6,12 +6,12 @@ import (
 )
 
 func TestWriteWorkerState(t *testing.T) {
-	not_expected := work.WorkerState{}
+	expected := work.WorkerState{LatestSync: "1", Status: true, WorkerID: 0}
 	endpoint := work.WorkerState{}
 
 	endpoint.WriteWorkerState(nil, "1", true, 0)
-	if not_expected == endpoint {
-		t.Fatalf("Wrong working WriteWorkerState, endpoint %v shouldn't be equal to %v", endpoint, not_expected)
+	if expected != endpoint {
+		t.Fatalf("Wrong working WriteWorkerState, endpoint %v should be equal to %v", endpoint, expected)
 	}
 }
 

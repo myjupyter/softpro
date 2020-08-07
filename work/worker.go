@@ -12,9 +12,9 @@ import (
 )
 
 type WorkerState struct {
-	latest_sync string
-	status      bool
-	worker_id   uint
+	LatestSync string
+	Status     bool
+	WorkerID   uint
 
 	err error
 }
@@ -24,22 +24,22 @@ func (ws *WorkerState) GetError() error {
 }
 
 func (ws *WorkerState) IsSync() bool {
-	return ws.status
+	return ws.Status
 }
 
-func (ws *WorkerState) WriteWorkerState(err error, latest_sync string, status bool, id uint) {
-	*ws = WorkerState{err: err, latest_sync: latest_sync, status: status, worker_id: id}
+func (ws *WorkerState) WriteWorkerState(err error, LatestSync string, Status bool, id uint) {
+	*ws = WorkerState{err: err, LatestSync: LatestSync, Status: Status, WorkerID: id}
 }
 
 func (ws *WorkerState) GetJSONInfo() string {
 	info := map[string]interface{}{
-		"latest_sync": ws.latest_sync,
-		"status":      ws.status,
-		"worker_id":   ws.worker_id,
+		"latest_sync": ws.LatestSync,
+		"status":      ws.Status,
+		"worker_id":   ws.WorkerID,
 	}
 
-	ws_json, _ := json.Marshal(info)
-	return string(ws_json)
+	wsJSON, _ := json.Marshal(info)
+	return string(wsJSON)
 }
 
 type SportSubs struct {
@@ -54,18 +54,24 @@ type Worker struct {
 	Conn *tarantool.Connection
 }
 
-func (w *Worker) Run(worker_state *WorkerState) {
-	worker_log := log.WithFields(log.Fields{"worker": w.ID})
+func (w *Worker) Run(workerState *WorkerState) {
+	workerLog := log.WithFields(log.Fields{"worker": w.ID})
 	URL := w.URL + w.Subs.Sport
 	SPORT := strings.ToUpper(w.Subs.Sport)
-	worker_log.Info("Started working")
+	workerLog.Info("Started working")
 
 	for {
 		// Makes request
 		resp, err := http.Get(URL)
 		if err != nil {
-			worker_log.Error(err)
-			worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			workerLog.Error(err)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			return
+		}
+
+		if resp.StatusCode != 200 {
+			workerLog.Errorf("HTTP %s", resp.Status)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
 		defer resp.Body.Close()
@@ -73,23 +79,23 @@ func (w *Worker) Run(worker_state *WorkerState) {
 		// Exstracts body from response
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			worker_log.Error(err)
-			worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			workerLog.Error(err)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
 
 		// Json Parsing
 		var dat map[string]interface{}
 		if err := json.Unmarshal(body, &dat); err != nil {
-			worker_log.Error(err)
-			worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			workerLog.Error(err)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
 		sport := dat["lines"].(map[string]interface{})
 		value, err := strconv.ParseFloat(sport[SPORT].(string), 64)
 		if err != nil {
-			worker_log.Error(err)
-			worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			workerLog.Error(err)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
 
@@ -101,15 +107,15 @@ func (w *Worker) Run(worker_state *WorkerState) {
 				"code":   info.Code,
 				"data":   info.Data,
 			}).Error(err)
-			worker_state.WriteWorkerState(err, time.Now().String(), false, w.ID)
+			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
-		worker_state.WriteWorkerState(nil, time.Now().String(), true, w.ID)
+		workerState.WriteWorkerState(nil, time.Now().String(), true, w.ID)
 
 		time.Sleep(time.Duration(w.Subs.Seconds) * time.Second)
 	}
 }
 
-func (w *Worker) Start(worker_state *WorkerState) {
-	go w.Run(worker_state)
+func (w *Worker) Start(workerState *WorkerState) {
+	go w.Run(workerState)
 }

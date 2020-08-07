@@ -27,7 +27,6 @@ func (wp *WorkerPool) Start(conn *tarantool.Connection, url string, sports ...Sp
 }
 
 func (wp *WorkerPool) CheckWorkersSync() bool {
-
 	for i := 0; i < len(wp.WorkersStates); i++ {
 		for {
 			if wp.WorkersStates[i].GetError() != nil {
@@ -43,8 +42,8 @@ func (wp *WorkerPool) CheckWorkersSync() bool {
 }
 
 func (wp *WorkerPool) CheckWorkerStatus() bool {
-	for _, worker_state := range wp.WorkersStates {
-		if worker_state.GetError() != nil {
+	for _, workerState := range wp.WorkersStates {
+		if workerState.GetError() != nil {
 			return false
 		}
 	}
@@ -66,7 +65,6 @@ func (wp *WorkerPool) ReadyHandler(w http.ResponseWriter, req *http.Request) {
 		"server": states,
 	}
 
-	status_json, _ := json.Marshal(info)
-
-	fmt.Fprintf(w, "%s", string(status_json))
+	statusJSON, _ := json.Marshal(info)
+	fmt.Fprintf(w, "%s", string(statusJSON))
 }

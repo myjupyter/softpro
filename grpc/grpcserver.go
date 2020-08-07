@@ -36,49 +36,49 @@ func (serv *GRPCServer) GetActualDataFromStorage(sports []string) map[string]flo
 }
 
 func (serv *GRPCServer) SubscribeOnSportsLines(stream subs.Subscribtion_SubscribeOnSportsLinesServer) error {
-	err_chan := make(chan error)
-	cmd_chan := make(chan bool)
-	req_chan := make(chan *subs.SubsRequest)
+	errChan := make(chan error)
+	cmdChan := make(chan bool)
+	reqChan := make(chan *subs.SubsRequest)
 
-	go func(err_chan chan error, cmd_chan chan bool, req_chan chan *subs.SubsRequest) {
+	go func(errChan chan error, cmdChan chan bool, reqChan chan *subs.SubsRequest) {
 		var req *subs.SubsRequest
 		for {
 			select {
-			case <-cmd_chan:
+			case <-cmdChan:
 				return
-			case req = <-req_chan:
+			case req = <-reqChan:
 			default:
 				if req != nil {
 					resp := &subs.SubsResponse{Sports: serv.GetActualDataFromStorage(req.Sports)}
 					if err := stream.Send(resp); err != nil {
-						err_chan <- err
+						errChan <- err
 						return
 					}
 					time.Sleep(time.Duration(req.Sec) * time.Second)
 				}
 			}
 		}
-	}(err_chan, cmd_chan, req_chan)
+	}(errChan, cmdChan, reqChan)
 
 	for {
 		req, err := stream.Recv()
 		if err != nil {
-			cmd_chan <- true
+			cmdChan <- true
 			return err
 		}
 
 		if err == io.EOF {
-			cmd_chan <- true
+			cmdChan <- true
 			return nil
 		}
 
 		select {
-		case err = <-err_chan:
+		case err = <-errChan:
 			return err
 		default:
 		}
 		if req.Sec != 0 && len(req.Sports) != 0 {
-			req_chan <- req
+			reqChan <- req
 		}
 	}
 }

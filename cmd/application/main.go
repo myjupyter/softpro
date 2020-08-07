@@ -13,20 +13,13 @@ import (
 	"net/http"
 )
 
-var (
-	Url      = "http://localhost:8000/api/v1/lines/"
-	DBAddr   = "127.0.0.1:3301"
-	HttpAddr = "127.0.0.1:8001"
-	GrpcAddr = "127.0.0.1:8002"
-
-	LogLevel = map[string]log.Level{
-		"debug":   log.DebugLevel,
-		"info":    log.InfoLevel,
-		"warning": log.WarnLevel,
-		"error":   log.ErrorLevel,
-		"fatal":   log.FatalLevel,
-	}
-)
+var LogLevel = map[string]log.Level{
+	"debug":   log.DebugLevel,
+	"info":    log.InfoLevel,
+	"warning": log.WarnLevel,
+	"error":   log.ErrorLevel,
+	"fatal":   log.FatalLevel,
+}
 
 func main() {
 	// Reads flags
@@ -57,8 +50,8 @@ func main() {
 	}
 
 	// Connection to the Data Storage
-	DBAddr = viper.GetString("datastorage.address") + ":" + viper.GetString("datastorage.port")
-	conn, err := ttool.Connect(DBAddr, ttool.Opts{
+	dbAddr := viper.GetString("datastorage.address") + ":" + viper.GetString("datastorage.port")
+	conn, err := ttool.Connect(dbAddr, ttool.Opts{
 		User: viper.GetString("datastorage.login"),
 		Pass: viper.GetString("datastorage.password"),
 	})
@@ -68,16 +61,16 @@ func main() {
 	}
 	defer conn.Close()
 
+	url := viper.GetString("lineprovider.url")
 	var pool work.WorkerPool
-	pool.Start(conn, Url, sports...)
+	pool.Start(conn, url, sports...)
 
 	// Sets handler for /ready
 	http.HandleFunc("/ready", pool.ReadyHandler)
 
-	HttpAddr = viper.GetString("http.address") + ":" + viper.GetString("http.port")
-
+	httpAddr := viper.GetString("http.address") + ":" + viper.GetString("http.port")
 	go func() {
-		err = http.ListenAndServe(HttpAddr, nil)
+		err = http.ListenAndServe(httpAddr, nil)
 	}()
 	if err != nil {
 		log.WithFields(log.Fields{"what": "HTTP Server"}).Fatal(err)
@@ -89,8 +82,8 @@ func main() {
 		srv := &grpcserv.GRPCServer{Conn: conn}
 
 		subs.RegisterSubscribtionServer(s, srv)
-		GrpcAddr = viper.GetString("grpc.address") + ":" + viper.GetString("grpc.port")
-		l, err := net.Listen("tcp", GrpcAddr)
+		grpcAddr := viper.GetString("grpc.address") + ":" + viper.GetString("grpc.port")
+		l, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
 			log.WithFields(log.Fields{"what": "GRPC Server"}).Fatal(err)
 		}
