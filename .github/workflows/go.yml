@@ -1,31 +1,24 @@
 name: Go
 
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
 jobs:
-    build:
-        name: Build
+  
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v1
-      with:
-          version: v1.30
-          run:
-              concurrency: 4
-          linters:
-              enable:
-                  - golint
-                  - govet
-              disable-all: true
-
-      steps:
-          - name: Set up Go 1.x
+    - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
           go-version: ^1.13
       id: go
-
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -35,6 +28,10 @@ jobs:
           go get -v -t -d ./...
           export GO111MODULE=on
           export GOBIN=$(go env GOPATH)
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0
+
+    - name: Lint
+      run: make lint
 
     - name: Test
       run: make tests

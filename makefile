@@ -4,7 +4,7 @@ all:
 	go build -o $(TARGET) cmd/$(TARGET)/main.go
 
 lint:
-	golangci-lint run
+	golangci-lint run -E golint
 
 proto:
 	protoc -I api/proto --go_out=plugins=grpc:api/subscription api/proto/subscription.proto
