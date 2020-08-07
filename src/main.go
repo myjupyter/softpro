@@ -3,10 +3,10 @@ package main
 import (
     "net"
     "net/http"
-    "softpro/work"
+    "github.com/myjupyter/softpro/work"
     "flag"
-    subs     "softpro/api/subscription"
-    grpcserv "softpro/grpc"
+    subs     "github.com/myjupyter/softpro/api/subscription"
+    grpcserv "github.com/myjupyter/softpro/grpc"
     grpc     "google.golang.org/grpc"
     log      "github.com/sirupsen/logrus"
     ttool    "github.com/tarantool/go-tarantool"

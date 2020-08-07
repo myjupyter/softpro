@@ -3,7 +3,7 @@ package grpcserver
 import (
     "io"
     "time"
-    subs    "softpro/api/subscription"
+    subs    "github.com/myjupyter/softpro/api/subscription"
     log     "github.com/sirupsen/logrus"
     ttool   "github.com/tarantool/go-tarantool"
 )
