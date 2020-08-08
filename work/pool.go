@@ -26,23 +26,29 @@ func (wp *WorkerPool) Start(conn *tarantool.Connection, url string, sports ...Sp
 	}
 }
 
-func (wp *WorkerPool) CheckWorkersSync(syncTimeout float64) bool {
-	var timer float64
-	for i := 0; i < len(wp.WorkersStates); i++ {
-		for ; timer < syncTimeout; timer += 0.10 {
-			if wp.WorkersStates[i].GetError() != nil {
-				return false
-			}
-			if wp.WorkersStates[i].IsSync() {
-				break
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
-		if timer > syncTimeout {
-			return false
-		}
-	}
-	return true
+func (wp *WorkerPool) CheckWorkersSync(syncTimeout time.Duration) bool {
+    syncChan := make(chan bool)
+
+    go func(wp *WorkerPool, syncChan chan bool) {
+        for i := 0; i < len(wp.WorkersStates); i++ {
+            for {
+                if wp.WorkersStates[i].GetError() != nil {
+                    syncChan <- false
+                }
+                if wp.WorkersStates[i].IsSync() {
+                    break
+                }
+            }
+        }
+        syncChan <- true
+    }(wp, syncChan)
+
+    select {
+    case isSync :=<-syncChan:
+        return isSync
+    case <-time.After(syncTimeout * time.Second):
+        return false
+    }
 }
 
 func (wp *WorkerPool) CheckWorkerStatus() bool {
