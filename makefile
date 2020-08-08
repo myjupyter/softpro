@@ -1,4 +1,5 @@
 TARGET=application
+DATA_DIR=tarantool
 
 all:
 	go build -o $(TARGET) cmd/$(TARGET)/main.go
@@ -15,11 +16,12 @@ format:
 tests:
 	$(MAKE) -C test
 
-clean:
-	rm $(TARGET)
-
 run:
+	mkdir -p $(DATA_DIR)
 	docker-compose up -d
 
 stop:
 	docker-compose stop
+
+clean:
+	rm $(TARGET)

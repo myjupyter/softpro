@@ -5,9 +5,9 @@ services:
     container_name: custom_tarantool
     image: myjupiter/tarantool:latest
     ports:
-    - "3301:3301"
+    - "3311:3301"
     volumes:
-    - /var/lib/tarantool:/var/lib/tarantool
+    - ./tarantool:/var/lib/tarantool
   
   lines-provider:
     container_name: line_providers

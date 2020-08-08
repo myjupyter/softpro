@@ -70,11 +70,11 @@ func main() {
 
 	httpAddr := viper.GetString("http.address") + ":" + viper.GetString("http.port")
 	go func() {
-		err = http.ListenAndServe(httpAddr, nil)
+		err := http.ListenAndServe(httpAddr, nil)
+		if err != nil {
+			log.WithFields(log.Fields{"what": "HTTP Server"}).Fatal(err)
+		}
 	}()
-	if err != nil {
-		log.WithFields(log.Fields{"what": "HTTP Server"}).Fatal(err)
-	}
 
 	// Waits for the first line synchronization
 	if pool.CheckWorkersSync() {
