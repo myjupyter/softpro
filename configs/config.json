@@ -8,13 +8,13 @@
         "port" : "8002"
     },
     "datastorage" : {
-        "address" : "localhost",
+        "address" : "tarantool",
         "port" : "3301",
         "login" : "user",
         "password" : "secret"
     },
     "lineprovider" : {
-        "url" : "http://localhost:8000/api/v1/lines/",
+        "url" : "http://linesprovider:8000/api/v1/lines/",
         "sports" : {
             "soccer"   : 1,
             "football" : 4,

@@ -15,12 +15,14 @@ services:
     ports:
     - "8000:8000"
     
-      #  kiddy-line-processor:
-      #    build: build/
-      #    container_name: application
-      #    ports:
-      #    - "8001:8001" 
-      #    - "8002:8001"
-      #    links:
-      #      - tarantool
-      #      - lines-provider
+  kiddy-line-processor:
+    build:
+      context: ./
+      dockerfile: build/Dockerfile
+    container_name: application
+    ports:
+    - "8001:8001" 
+    - "8002:8001"
+    links:
+    - "tarantool:tarantool"
+    - "lines-provider:linesprovider"
