@@ -26,16 +26,20 @@ func (wp *WorkerPool) Start(conn *tarantool.Connection, url string, sports ...Sp
 	}
 }
 
-func (wp *WorkerPool) CheckWorkersSync() bool {
+func (wp *WorkerPool) CheckWorkersSync(syncTimeout float64) bool {
+	var timer float64
 	for i := 0; i < len(wp.WorkersStates); i++ {
-		for {
+		for ; timer < syncTimeout; timer += 0.10 {
 			if wp.WorkersStates[i].GetError() != nil {
 				return false
 			}
 			if wp.WorkersStates[i].IsSync() {
 				break
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(10 * time.Millisecond)
+		}
+		if timer > syncTimeout {
+			return false
 		}
 	}
 	return true

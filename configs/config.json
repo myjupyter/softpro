@@ -11,7 +11,8 @@
         "address" : "tarantool",
         "port" : "3301",
         "login" : "user",
-        "password" : "secret"
+        "password" : "secret",
+        "timeout" : 5
     },
     "lineprovider" : {
         "url" : "http://linesprovider:8000/api/v1/lines/",

@@ -8,17 +8,24 @@ import (
 	"time"
 )
 
+type GRPCError struct{}
+
+func (err *GRPCError) Error() string {
+	return "Wrong request"
+}
+
 type GRPCServer struct {
 	Conn *ttool.Connection
 }
 
-func (serv *GRPCServer) GetActualDataFromStorage(sports []string) map[string]float64 {
+func (serv *GRPCServer) GetActualDataFromStorage(sports []string) (map[string]float64, error) {
 	info := make(map[string]float64)
 
 	for _, sport := range sports {
 		resp, err := serv.Conn.Call("box.space."+sport+".index.id:max", []interface{}{})
 		if err != nil {
-			log.Fatal(err)
+			log.Warn(err)
+			return nil, err
 		}
 
 		index := resp.Data[0].([]interface{})[0].(uint64)
@@ -32,7 +39,7 @@ func (serv *GRPCServer) GetActualDataFromStorage(sports []string) map[string]flo
 
 		info[sport] = value
 	}
-	return info
+	return info, nil
 }
 
 func (serv *GRPCServer) SubscribeOnSportsLines(stream subs.Subscribtion_SubscribeOnSportsLinesServer) error {
@@ -42,19 +49,26 @@ func (serv *GRPCServer) SubscribeOnSportsLines(stream subs.Subscribtion_Subscrib
 
 	go func(errChan chan error, cmdChan chan bool, reqChan chan *subs.SubsRequest) {
 		var req *subs.SubsRequest
+		var sec int64 = 1
+
 		for {
 			select {
 			case <-cmdChan:
 				return
 			case req = <-reqChan:
-			default:
-				if req != nil {
-					resp := &subs.SubsResponse{Sports: serv.GetActualDataFromStorage(req.Sports)}
-					if err := stream.Send(resp); err != nil {
-						errChan <- err
-						return
-					}
-					time.Sleep(time.Duration(req.Sec) * time.Second)
+				sec = req.Sec
+			case <-time.After(time.Duration(sec) * time.Second):
+			}
+			if req != nil {
+				sports, err := serv.GetActualDataFromStorage(req.Sports)
+				if err != nil {
+					errChan <- err
+					return
+				}
+				resp := &subs.SubsResponse{Sports: sports}
+				if err = stream.Send(resp); err != nil {
+					errChan <- err
+					return
 				}
 			}
 		}
@@ -77,8 +91,11 @@ func (serv *GRPCServer) SubscribeOnSportsLines(stream subs.Subscribtion_Subscrib
 			return err
 		default:
 		}
-		if req.Sec != 0 && len(req.Sports) != 0 {
+		if req.Sec > 0 && len(req.Sports) != 0 {
 			reqChan <- req
+		} else {
+			cmdChan <- true
+			return &GRPCError{}
 		}
 	}
 }

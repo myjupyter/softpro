@@ -34,7 +34,7 @@ func (ws *WorkerState) WriteWorkerState(err error, LatestSync string, Status boo
 func (ws *WorkerState) GetJSONInfo() string {
 	info := map[string]interface{}{
 		"latest_sync": ws.LatestSync,
-		"status":      ws.Status,
+		"is_working":  ws.Status,
 		"worker_id":   ws.WorkerID,
 	}
 
@@ -58,7 +58,7 @@ func (w *Worker) Run(workerState *WorkerState) {
 	workerLog := log.WithFields(log.Fields{"worker": w.ID})
 	URL := w.URL + w.Subs.Sport
 	SPORT := strings.ToUpper(w.Subs.Sport)
-	workerLog.Info("Started working")
+	workerLog.Info("Started working at purpose " + w.Subs.Sport)
 
 	for {
 		// Makes request
@@ -91,6 +91,7 @@ func (w *Worker) Run(workerState *WorkerState) {
 			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
 			return
 		}
+
 		sport := dat["lines"].(map[string]interface{})
 		value, err := strconv.ParseFloat(sport[SPORT].(string), 64)
 		if err != nil {
@@ -103,6 +104,7 @@ func (w *Worker) Run(workerState *WorkerState) {
 		info, err := w.Conn.Insert(w.Subs.Sport, []interface{}{nil, value, uint64(time.Now().Unix())})
 		if err != nil {
 			log.WithFields(log.Fields{
+				"what":   "insertion to Data Storage",
 				"worker": w.ID,
 				"code":   info.Code,
 				"data":   info.Data,

@@ -10,7 +10,7 @@ services:
     - ./tarantool:/var/lib/tarantool
   
   lines-provider:
-    container_name: line_providers
+    container_name: lines_provider
     image: antonboom/lines-provider
     ports:
     - "8000:8000"

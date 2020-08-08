@@ -77,7 +77,9 @@ func main() {
 	}()
 
 	// Waits for the first line synchronization
-	if pool.CheckWorkersSync() {
+	timeOut := viper.GetFloat64("datastorage.timeout")
+	if pool.CheckWorkersSync(timeOut) {
+		log.Debug("GRPC Started")
 		s := grpc.NewServer()
 		srv := &grpcserv.GRPCServer{Conn: conn}
 
@@ -91,5 +93,7 @@ func main() {
 		if err := s.Serve(l); err != nil {
 			log.WithFields(log.Fields{"what": "GRPC Server"}).Fatal(err)
 		}
+	} else {
+		log.WithFields(log.Fields{"what": "Data Storage access time out"}).Fatal(err)
 	}
 }

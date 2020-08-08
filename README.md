@@ -21,4 +21,4 @@ For installation instructions, see [Protocol Buffer Compiler Installation](https
 * `make format` - to run go fmt
 * `make run` - launch docker-compose to build containers
 * `make stop` - to stop container
-
+* `make clean` - to remove binary
