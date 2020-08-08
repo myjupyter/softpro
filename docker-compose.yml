@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  tarantool:
+    container_name: custom_tarantool
+    image: myjupiter/tarantool:latest
+    ports:
+    - "3301:3301"
+    volumes:
+    - /var/lib/tarantool:/var/lib/tarantool
+  
+  lines-provider:
+    container_name: line_providers
+    image: antonboom/lines-provider
+    ports:
+    - "8000:8000"
+    
+      #  kiddy-line-processor:
+      #    build: build/
+      #    container_name: application
+      #    ports:
+      #    - "8001:8001" 
+      #    - "8002:8001"
+      #    links:
+      #      - tarantool
+      #      - lines-provider
