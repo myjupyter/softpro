@@ -54,50 +54,71 @@ type Worker struct {
 	Conn *tarantool.Connection
 }
 
+func (w *Worker) Get(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+type ParserError struct {
+}
+
+func (err *ParserError) Error() string {
+	return "Parser Error"
+}
+
+func ParseLinesProviderData(body []byte, sportKey string) (float64, error) {
+	var dat map[string]interface{}
+	if err := json.Unmarshal(body, &dat); err != nil {
+		return 0, err
+	}
+	sport, ok := dat["lines"].(map[string]interface{})
+	if !ok {
+		return 0, &ParserError{}
+	}
+	value, err := strconv.ParseFloat(sport[sportKey].(string), 64)
+	if err != nil {
+		return 0, err
+	}
+	return value, nil
+}
+
 func (w *Worker) Run(workerState *WorkerState) {
-	workerLog := log.WithFields(log.Fields{"worker": w.ID})
 	URL := w.URL + w.Subs.Sport
 	SPORT := strings.ToUpper(w.Subs.Sport)
-	workerLog.Info("Started working at purpose " + w.Subs.Sport)
 
+	log.Info("Started working at purpose " + w.Subs.Sport)
 	for {
 		// Makes request
-		resp, err := http.Get(URL)
+		body, err := w.Get(URL)
 		if err != nil {
-			workerLog.Error(err)
+			log.WithFields(log.Fields{
+				"what":   "GET Request",
+				"worker": w.ID,
+			}).Error(err)
 			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
-			return
-		}
-
-		if resp.StatusCode != 200 {
-			workerLog.Errorf("HTTP %s", resp.Status)
-			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
-			return
-		}
-		defer resp.Body.Close()
-
-		// Exstracts body from response
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			workerLog.Error(err)
-			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
-			return
 		}
 
 		// Json Parsing
-		var dat map[string]interface{}
-		if err := json.Unmarshal(body, &dat); err != nil {
-			workerLog.Error(err)
-			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
-			return
-		}
-
-		sport := dat["lines"].(map[string]interface{})
-		value, err := strconv.ParseFloat(sport[SPORT].(string), 64)
+		value, err := ParseLinesProviderData(body, SPORT)
 		if err != nil {
-			workerLog.Error(err)
+			log.WithFields(log.Fields{
+				"what":   "Parser",
+				"worker": w.ID,
+			}).Error(err)
 			workerState.WriteWorkerState(err, time.Now().String(), false, w.ID)
-			return
 		}
 
 		// DataBase Insertion
