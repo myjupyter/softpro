@@ -13,6 +13,7 @@ import (
 	"net/http"
 )
 
+// LogLevel ...
 var LogLevel = map[string]log.Level{
 	"debug":   log.DebugLevel,
 	"info":    log.InfoLevel,
