@@ -22,3 +22,12 @@ For installation instructions, see [Protocol Buffer Compiler Installation](https
 * `make run` - launch docker-compose to build containers
 * `make stop` - to stop container
 * `make clean` - to remove binary
+
+## Info
+0.0.0.0:8001 - default HTTP port
+
+0.0.0.0:8002 - default gRPC port
+
+Also you could change the default settings through `configs/config.json`
+
+For connection to gRPC server use [Evans](https://github.com/ktr0731/evans)
